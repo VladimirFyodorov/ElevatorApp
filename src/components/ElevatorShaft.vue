@@ -21,7 +21,7 @@ div {
   top: 0px;
   left: 1px;
   width: 120px;
-  height: 100vh;
+  height: 99vh;
 
   border: 1px black solid;
 }

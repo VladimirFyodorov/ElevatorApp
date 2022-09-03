@@ -4,6 +4,8 @@ export default createStore({
   state() {
     return {
       position: 0.8,
+      currentFloor: 1,
+      destinationFloor: "",
       doorsWidth: 1,
       moving: false,
       imgUrl: "https://cdn2.thecatapi.com/images/nO1TpfQ9f.jpg",
@@ -49,6 +51,7 @@ export default createStore({
       const neededPosition = 1 - ticket.floor / 5;
       const isGoingDown = state.position < neededPosition;
       ticket.isMoving = true;
+      state.destinationFloor = ticket.floor;
       while (
         ((!isGoingDown && state.position > neededPosition) ||
           (isGoingDown && state.position < neededPosition)) &&
@@ -57,9 +60,15 @@ export default createStore({
         await new Promise((resolve) => setTimeout(resolve, 5));
         if (ticket.isMoving) {
           state.position += isGoingDown ? 0.001 : -0.001;
+          const floatFloor = (1 - state.position) * 5;
+          state.currentFloor = isGoingDown
+            ? Math.ceil(floatFloor)
+            : Math.floor(floatFloor);
         }
       }
       ticket.isMoving = false;
+      state.currentFloor = ticket.floor;
+      state.destinationFloor = "";
 
       ticket.isWaiting = true;
       // open doors
@@ -87,15 +96,18 @@ export default createStore({
     },
 
     addTicket({ state, commit, dispatch }, floor) {
-      const isValid =
+      const noTickets =
         state.tickets.filter((ticket) => ticket.floor == floor && !ticket.done)
           .length == 0;
-      if (isValid) {
+      const queueIsEmpty =
+        state.tickets.filter((ticket) => !ticket.done).length == 0;
+      const sameFloor = state.currentFloor == floor;
+      if ((noTickets && !queueIsEmpty) || (queueIsEmpty && !sameFloor)) {
         commit({ type: "createTicket", floor });
-      }
 
-      if (isValid && !state.moving) {
-        dispatch("start");
+        if (!state.moving) {
+          dispatch("start");
+        }
       }
     },
 
