@@ -1,7 +1,7 @@
 <template>
   <div class="button">
     <p>{{ floor }}</p>
-    <button @click="onClick" class="btn-circle"></button>
+    <button @click="onClick" :style="btnColor" class="btn-circle"></button>
   </div>
 </template>
 
@@ -14,6 +14,25 @@ export default {
     ...mapActions(["addTicket", "start"]),
     onClick() {
       this.addTicket(parseInt(this.floor));
+    },
+  },
+  computed: {
+    btnColor() {
+      const hasTicket =
+        this.$store.state.tickets.filter(
+          (ticket) =>
+            ticket.floor == this.floor && !ticket.done && !ticket.isWaiting
+        ).length > 0;
+      const hasCompletingTicket =
+        this.$store.state.tickets.filter(
+          (ticket) => ticket.floor == this.floor && ticket.isMoving
+        ).length > 0;
+      const color = hasCompletingTicket
+        ? "green"
+        : hasTicket
+        ? "#FFFF99"
+        : "#D3D3D3";
+      return `background-color: ${color};`;
     },
   },
 };

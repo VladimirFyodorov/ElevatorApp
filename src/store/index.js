@@ -3,7 +3,7 @@ import { createStore } from "vuex";
 export default createStore({
   state() {
     return {
-      position: 0,
+      position: 0.8,
       doorsWidth: 1,
       moving: false,
       imgUrl: "https://cdn2.thecatapi.com/images/nO1TpfQ9f.jpg",
