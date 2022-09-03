@@ -2,6 +2,7 @@
   <div class="wrapper">
     <ElevatorShaft />
     <ElevatorButtons />
+    <div id="image-box"><img id="cat-image" /><br /></div>
   </div>
 </template>
 
