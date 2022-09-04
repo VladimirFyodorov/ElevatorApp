@@ -238,8 +238,9 @@ export default createStore({
 
       function checkIfTicketIsValid(state, floor) {
         const hasElevetorOnTheFloor =
-          state.elevators.filter((elevator) => elevator.currentFloor == floor)
-            .length > 0;
+          state.elevators.filter(
+            (elevator) => elevator.currentFloor == floor && !elevator.moving
+          ).length > 0;
 
         const hasElevatorOnTheWay =
           state.elevators.filter(

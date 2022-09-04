@@ -69,7 +69,6 @@ export default {
 
 <style scoped>
 div.elevator {
-  /* position: absolute; */
   position: relative;
   width: 118px;
   background-size: cover;
