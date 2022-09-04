@@ -11,9 +11,9 @@ export default {
   name: "ElevatorButton",
   props: ["floor"],
   methods: {
-    ...mapActions(["addTicket", "start"]),
+    ...mapActions(["createTicket"]),
     onClick() {
-      this.addTicket(parseInt(this.floor));
+      this.createTicket(parseInt(this.floor));
     },
   },
   computed: {

@@ -1,4 +1,8 @@
 import { createStore } from "vuex";
+import Service from "../service";
+import { getBackup } from "../utils";
+
+const service = new Service();
 
 export default createStore({
   state() {
@@ -8,17 +12,36 @@ export default createStore({
       destinationFloor: "",
       doorsWidth: 1,
       moving: false,
-      imgUrl: "https://cdn2.thecatapi.com/images/nO1TpfQ9f.jpg",
+      imgUrl: "",
       tickets: [
         // { id: 1, floor: 4, isMoving: false, isWaiting: false, done: false },
         // { id: 2, floor: 5, isMoving: false, isWaiting: false, done: false },
       ],
+      ...getBackup(),
     };
   },
-  getters: {},
+  getters: {
+    position(state) {
+      return state.position;
+    },
+    currentFloor(state) {
+      return state.currentFloor;
+    },
+    destinationFloor(state) {
+      return state.destinationFloor;
+    },
+    doorsWidth(state) {
+      return state.doorsWidth;
+    },
+    moving(state) {
+      return state.moving;
+    },
+    imgUrl(state) {
+      return state.imgUrl;
+    },
+  },
   mutations: {
-    createTicket(state, payload) {
-      const floor = payload.floor;
+    createTicket(state, floor) {
       const tickets = state.tickets;
       const maxId = tickets.reduce(
         (acc, ticket) => Math.max(acc, ticket.id),
@@ -32,6 +55,21 @@ export default createStore({
         isWaiting: false,
         done: false,
       });
+      // makeBackup(state);
+      // console.log(getBackup());
+    },
+    updateTicket(state, ticket) {
+      state.tickets.map((elem) => (elem.id == ticket.id ? ticket : elem));
+      // makeBackup(state);
+    },
+    deleteCompletedTickets(state) {
+      console.log(state);
+    },
+    updateRndCatImg(state, payload) {
+      const url =
+        payload ||
+        "https://www.pngkit.com/png/detail/212-2123465_404-404-error-images-png.png";
+      state.imgUrl = url;
     },
   },
   actions: {
@@ -45,12 +83,12 @@ export default createStore({
       state.moving = false;
     },
 
-    async completeTicket({ state, dispatch }, ticket) {
-      // cat
-      dispatch("fetchRndCatImg");
+    async completeTicket({ state, dispatch, commit }, ticket) {
+      dispatch("updateRndCatImg");
       const neededPosition = 1 - ticket.floor / 5;
       const isGoingDown = state.position < neededPosition;
       ticket.isMoving = true;
+      commit("updateTicket", ticket);
       state.destinationFloor = ticket.floor;
       while (
         ((!isGoingDown && state.position > neededPosition) ||
@@ -67,10 +105,12 @@ export default createStore({
         }
       }
       ticket.isMoving = false;
+      commit("updateTicket", ticket);
       state.currentFloor = ticket.floor;
       state.destinationFloor = "";
 
       ticket.isWaiting = true;
+      commit("updateTicket", ticket);
       // open doors
       while (state.doorsWidth > 0 && ticket.isWaiting) {
         await new Promise((resolve) => setTimeout(resolve, 10));
@@ -89,13 +129,14 @@ export default createStore({
         }
       }
       ticket.isWaiting = false;
+      commit("updateTicket", ticket);
       state.doorsWidth = 1;
 
       ticket.done = true;
-      state.tickets.map((elem) => (elem.id == ticket.id ? ticket : elem));
+      commit("updateTicket", ticket);
     },
 
-    addTicket({ state, commit, dispatch }, floor) {
+    createTicket({ state, commit, dispatch }, floor) {
       const noTickets =
         state.tickets.filter((ticket) => ticket.floor == floor && !ticket.done)
           .length == 0;
@@ -103,7 +144,7 @@ export default createStore({
         state.tickets.filter((ticket) => !ticket.done).length == 0;
       const sameFloor = state.currentFloor == floor;
       if ((noTickets && !queueIsEmpty) || (queueIsEmpty && !sameFloor)) {
-        commit({ type: "createTicket", floor });
+        commit("createTicket", floor);
 
         if (!state.moving) {
           dispatch("start");
@@ -111,11 +152,11 @@ export default createStore({
       }
     },
 
-    fetchRndCatImg({ state }) {
-      fetch("https://api.thecatapi.com/v1/images/search")
+    updateRndCatImg({ commit }) {
+      service
+        .fetchRndCatImg()
         .then((res) => res.json())
-        .then((json) => (state.imgUrl = json[0].url))
-        .catch((err) => console.log(err));
+        .then((json) => commit("updateRndCatImg", json[0].url));
     },
   },
   modules: {},

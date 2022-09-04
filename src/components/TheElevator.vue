@@ -1,44 +1,50 @@
 <template>
   <div @click="onClick" :style="elevatorCSS" class="elevator">
     <div class="elevatorHeader">
-      <div :class="headerArrow"></div>
+      <div :class="headerArrowCSS"></div>
       {{ headerTxt }}
     </div>
     <div class="doors">
-      <div :style="doorsWidth" class="door left"></div>
-      <div :style="doorsWidth" class="door right"></div>
+      <div :style="doorsWidthCSS" class="door left"></div>
+      <div :style="doorsWidthCSS" class="door right"></div>
     </div>
   </div>
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { mapGetters, mapActions } from "vuex";
 export default {
-  name: "ElevatorElem",
+  name: "TheElevator",
   computed: {
+    ...mapGetters([
+      "position",
+      "currentFloor",
+      "destinationFloor",
+      "doorsWidth",
+      "imgUrl",
+    ]),
     elevatorCSS() {
-      const postition = `top: ${this.$store.state.position * this.vh}px; `;
-      const img = `background-image: url("${this.$store.state.imgUrl}"); `;
+      const postition = `top: ${this.position * this.vh}px; `;
+      const img = `background-image: url("${this.imgUrl}"); `;
       return postition + img;
     },
 
     headerTxt() {
-      const dest = this.$store.state.destinationFloor;
-
+      const dest = this.destinationFloor;
       return dest ? `${dest}` : "";
     },
 
-    headerArrow() {
-      const cur = this.$store.state.currentFloor;
-      const dest = this.$store.state.destinationFloor;
+    headerArrowCSS() {
+      const cur = this.currentFloor;
+      const dest = this.destinationFloor;
       if (!dest) {
         return "";
       }
       return cur > dest ? "arrow-down" : "arrow-up";
     },
 
-    doorsWidth() {
-      return `width: ${this.$store.state.doorsWidth * this.maxDoorsWidth}px`;
+    doorsWidthCSS() {
+      return `width: ${this.doorsWidth * this.maxDoorsWidth}px`;
     },
   },
   methods: {

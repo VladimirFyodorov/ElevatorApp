@@ -1,16 +1,16 @@
 <template>
   <div>
-    <ElevatorElem />
+    <TheElevator />
   </div>
 </template>
 
 <script>
-import ElevatorElem from "./Elevator.vue";
+import TheElevator from "./TheElevator.vue";
 
 export default {
   name: "ElevatorShaft",
   components: {
-    ElevatorElem,
+    TheElevator,
   },
 };
 </script>
