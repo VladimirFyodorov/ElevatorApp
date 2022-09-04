@@ -7,3 +7,8 @@ npm run start
 ```
 
 You can change amount of elevators and floors in **config.js**
+
+
+<hr>
+
+![Home page](/readme_src/preview.jpg "Home page")
