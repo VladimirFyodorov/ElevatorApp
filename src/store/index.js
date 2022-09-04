@@ -62,7 +62,7 @@ export default createStore({
     btnColor: (state) => (floor) => {
       const hasTickets =
         state.elevators.filter((elevator) => {
-          if (elevator.currentFloor == floor) {
+          if (elevator.currentFloor == floor && !elevator.destinationFloor) {
             return false;
           } else {
             const tickets = elevator.tickets.filter(
