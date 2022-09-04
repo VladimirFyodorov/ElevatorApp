@@ -1,5 +1,5 @@
 const config = {
-  elevatorsAmount: 2,
+  elevatorsAmount: 4,
   floorsAmount: 10,
 };
 

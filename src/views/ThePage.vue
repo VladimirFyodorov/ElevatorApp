@@ -18,11 +18,11 @@ export default {
     ElevatorButtons,
   },
   methods: {
-    ...mapActions(["startAll"]),
+    ...mapActions(["startElevators"]),
   },
   created() {
     document.addEventListener("DOMContentLoaded", () => {
-      this.startAll();
+      this.startElevators();
     });
     window.addEventListener("beforeunload", () => {
       makeBackup(this.$store.state);
