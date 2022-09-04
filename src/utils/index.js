@@ -4,7 +4,15 @@ const makeBackup = (state) => {
 
 const getBackup = () => {
   try {
-    return JSON.parse(sessionStorage.getItem("state"));
+    const backup = JSON.parse(sessionStorage.getItem("state"));
+    // but elevators are stopped moving and waiting =>
+    backup.elevators.map((elevator) => {
+      elevator.moving = false;
+      elevator.waiting = false;
+      return elevator;
+    });
+
+    return backup;
   } catch {
     return {};
   }

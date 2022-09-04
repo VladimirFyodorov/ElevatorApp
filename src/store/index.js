@@ -1,162 +1,281 @@
 import { createStore } from "vuex";
 import Service from "../service";
 import { getBackup } from "../utils";
+import config from "../../config.js";
 
 const service = new Service();
 
 export default createStore({
   state() {
+    let elevators = [];
+    for (let i = 1; i <= config.elevatorsAmount; i++) {
+      elevators.push({
+        id: i,
+        position: 1 - 1 / config.floorsAmount,
+        currentFloor: 1,
+        destinationFloor: "",
+        doorsWidth: 1,
+        moving: false,
+        waiting: false,
+        imgUrl: "",
+        tickets: [],
+      });
+    }
     return {
-      position: 0.8,
-      currentFloor: 1,
-      destinationFloor: "",
-      doorsWidth: 1,
-      moving: false,
-      imgUrl: "",
-      tickets: [
-        // { id: 1, floor: 4, isMoving: false, isWaiting: false, done: false },
-        // { id: 2, floor: 5, isMoving: false, isWaiting: false, done: false },
-      ],
+      elevators,
+      maxTicketId: 0,
+      // { id: 1, floor: 4, isMoving: false, isWaiting: false, done: false },
+      // { "id": 1, "floor": 4, "isMoving": "false", "isWaiting": "false", "done": "false" }
+      // { id: 2, floor: 5, isMoving: false, isWaiting: false, done: false },
       ...getBackup(),
+      ...config, //should be after backup to change floors/elevators on reload
     };
   },
   getters: {
-    position(state) {
-      return state.position;
+    floorsAmount(state) {
+      return state.floorsAmount;
     },
-    currentFloor(state) {
-      return state.currentFloor;
+    elevatorsAmount(state) {
+      return state.elevatorsAmount;
     },
-    destinationFloor(state) {
-      return state.destinationFloor;
+    elevators(state) {
+      return state.elevators;
     },
-    doorsWidth(state) {
-      return state.doorsWidth;
+    freeElevators(state) {
+      const arr = state.elevators.filter(
+        (elem) => !elem.moving && !elem.waiting
+      );
+      return arr;
     },
-    moving(state) {
-      return state.moving;
+
+    elevatorsLoad(state) {
+      const res = state.elevators.map((elevator) => {
+        const countTickets = elevator.tickets.reduce((acc, ticket) => {
+          if (!ticket.done) {
+            return acc + 1;
+          }
+          return acc;
+        }, 0);
+        return { ...elevator, countTickets };
+      });
+      return res;
     },
-    imgUrl(state) {
-      return state.imgUrl;
+
+    btnColor: (state) => (floor) => {
+      const hasTickets =
+        state.elevators.filter(
+          (elevator) =>
+            elevator.tickets.filter(
+              (ticket) =>
+                ticket.floor == floor && !ticket.done && !ticket.isWaiting
+            ).length > 0
+        ).length > 0;
+
+      const hasMovingElevator =
+        state.elevators.filter((elevator) => elevator.destinationFloor == floor)
+          .length > 0;
+      const color = hasMovingElevator
+        ? "green"
+        : hasTickets
+        ? "yellow"
+        : "gray";
+      return color;
     },
   },
   mutations: {
-    createTicket(state, floor) {
-      const tickets = state.tickets;
-      const maxId = tickets.reduce(
-        (acc, ticket) => Math.max(acc, ticket.id),
-        0
-      );
-      const id = maxId + 1;
-      state.tickets.push({
+    createTicket(state, { floor, elevator }) {
+      state.maxTicketId = state.maxTicketId + 1;
+      const id = state.maxTicketId;
+      const ticket = {
         id,
         floor,
         isMoving: false,
         isWaiting: false,
         done: false,
+      };
+
+      const elevators = state.elevators.map((elev) => {
+        if (elev.id != elevator.id) {
+          return elev;
+        }
+        const tickets = [...elev.tickets, ticket];
+        return { ...elev, tickets };
       });
-      // makeBackup(state);
-      // console.log(getBackup());
+
+      state.elevators = elevators;
     },
-    updateTicket(state, ticket) {
-      state.tickets.map((elem) => (elem.id == ticket.id ? ticket : elem));
-      // makeBackup(state);
+
+    updateTicket(state, { ticket, elevator }) {
+      state.elevators.map((elev) => {
+        if (elev.id != elevator.id) {
+          return elev;
+        }
+        return elev.tickets.map((elem) =>
+          elem.id == ticket.id ? ticket : elem
+        );
+      });
     },
+
     deleteCompletedTickets(state) {
       console.log(state);
     },
-    updateRndCatImg(state, payload) {
-      const url =
-        payload ||
+
+    updateRndCatImg(state, { elevator, url }) {
+      const imgUrl =
+        url ||
         "https://www.pngkit.com/png/detail/212-2123465_404-404-error-images-png.png";
-      state.imgUrl = url;
-    },
-  },
-  actions: {
-    async start({ state, dispatch }) {
-      state.moving = true;
-      for (const ticket of state.tickets) {
-        if (!ticket.done) {
-          await dispatch("completeTicket", ticket);
-        }
-      }
-      state.moving = false;
+      elevator.imgUrl = imgUrl;
+      this.commit("updateElevator", { elevator, feilds: ["imgUrl"] });
     },
 
-    async completeTicket({ state, dispatch, commit }, ticket) {
-      dispatch("updateRndCatImg");
-      const neededPosition = 1 - ticket.floor / 5;
-      const isGoingDown = state.position < neededPosition;
+    updateElevator(state, { elevator, feilds }) {
+      const elevators = state.elevators.map((elem) => {
+        if (elem.id != elevator.id) {
+          return elem;
+        }
+
+        const upd = Object.fromEntries(
+          Object.entries(elevator).filter(([key]) => feilds.includes(key))
+        );
+        return { ...elem, ...upd };
+      });
+      state.elevators = elevators;
+    },
+  },
+
+  actions: {
+    startAll({ state, dispatch }) {
+      for (const elevator of state.elevators) {
+        if (!elevator.moving && !elevator.waiting) {
+          dispatch("startOne", elevator);
+        }
+      }
+    },
+
+    async startOne({ dispatch }, elevator) {
+      for (const ticket of elevator.tickets) {
+        if (!ticket.done) {
+          await dispatch("completeTicket", {
+            ticket,
+            elevator: elevator,
+          });
+        }
+      }
+    },
+
+    async completeTicket({ state, dispatch, commit }, { ticket, elevator }) {
+      dispatch("updateRndCatImg", elevator);
+      const neededPosition = 1 - ticket.floor / state.floorsAmount;
+      const isGoingDown = elevator.position < neededPosition;
       ticket.isMoving = true;
-      commit("updateTicket", ticket);
-      state.destinationFloor = ticket.floor;
+      commit("updateTicket", { ticket, elevator });
+      elevator.moving = true;
+      elevator.destinationFloor = ticket.floor;
+      commit("updateElevator", {
+        elevator,
+        feilds: ["destinationFloor", "moving"],
+      });
       while (
-        ((!isGoingDown && state.position > neededPosition) ||
-          (isGoingDown && state.position < neededPosition)) &&
+        ((!isGoingDown && elevator.position > neededPosition) ||
+          (isGoingDown && elevator.position < neededPosition)) &&
         ticket.isMoving
       ) {
-        await new Promise((resolve) => setTimeout(resolve, 5));
+        await new Promise((resolve) => setTimeout(resolve, state.floorsAmount));
         if (ticket.isMoving) {
-          state.position += isGoingDown ? 0.001 : -0.001;
-          const floatFloor = (1 - state.position) * 5;
-          state.currentFloor = isGoingDown
+          elevator.position += isGoingDown ? 0.001 : -0.001;
+          const floatFloor = (1 - elevator.position) * state.floorsAmount;
+          elevator.currentFloor = isGoingDown
             ? Math.ceil(floatFloor)
             : Math.floor(floatFloor);
+          commit("updateElevator", {
+            elevator,
+            feilds: ["position", "currentFloor"],
+          });
         }
       }
       ticket.isMoving = false;
-      commit("updateTicket", ticket);
-      state.currentFloor = ticket.floor;
-      state.destinationFloor = "";
-
       ticket.isWaiting = true;
-      commit("updateTicket", ticket);
+      commit("updateTicket", { ticket, elevator });
+
+      elevator.moving = false;
+      elevator.waiting = true;
+      elevator.currentFloor = ticket.floor;
+      elevator.destinationFloor = "";
+      commit("updateElevator", {
+        elevator,
+        feilds: ["moving", "waiting", "currentFloor", "destinationFloor"],
+      });
+
       // open doors
-      while (state.doorsWidth > 0 && ticket.isWaiting) {
+      while (elevator.doorsWidth > 0 && ticket.isWaiting) {
         await new Promise((resolve) => setTimeout(resolve, 10));
         if (ticket.isWaiting) {
-          state.doorsWidth -= 0.01;
+          elevator.doorsWidth -= 0.01;
+          commit("updateElevator", { elevator, feilds: ["doorsWidth"] });
         }
       }
       // waiting
-      state.doorsWidth = 0;
+      elevator.doorsWidth = 0;
+      commit("updateElevator", { elevator, feilds: ["doorsWidth"] });
       await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // close doors
-      while (state.doorsWidth < 1 && ticket.isWaiting) {
+      while (elevator.doorsWidth < 1 && ticket.isWaiting) {
         await new Promise((resolve) => setTimeout(resolve, 10));
         if (ticket.isWaiting) {
-          state.doorsWidth += 0.01;
+          elevator.doorsWidth += 0.01;
+          commit("updateElevator", { elevator, feilds: ["doorsWidth"] });
         }
       }
+      elevator.doorsWidth = 1;
+      elevator.waiting = false;
+      commit("updateElevator", { elevator, feilds: ["waiting", "doorsWidth"] });
+
       ticket.isWaiting = false;
-      commit("updateTicket", ticket);
-      state.doorsWidth = 1;
-
       ticket.done = true;
-      commit("updateTicket", ticket);
+      commit("updateTicket", { ticket, elevator });
+      // dispatch("startOne", elevator);
+      dispatch("startAll");
     },
 
-    createTicket({ state, commit, dispatch }, floor) {
+    createTicket({ commit, getters, dispatch }, floor) {
+      const elevator = alocateTicket(floor);
+      const tickets = elevator.tickets;
       const noTickets =
-        state.tickets.filter((ticket) => ticket.floor == floor && !ticket.done)
+        tickets.filter((ticket) => ticket.floor == floor && !ticket.done)
           .length == 0;
-      const queueIsEmpty =
-        state.tickets.filter((ticket) => !ticket.done).length == 0;
-      const sameFloor = state.currentFloor == floor;
+      const queueIsEmpty = tickets.filter((ticket) => !ticket.done).length == 0;
+      const sameFloor = elevator.currentFloor == floor;
       if ((noTickets && !queueIsEmpty) || (queueIsEmpty && !sameFloor)) {
-        commit("createTicket", floor);
+        commit("createTicket", { floor, elevator });
+        dispatch("startAll");
+      }
 
-        if (!state.moving) {
-          dispatch("start");
+      function alocateTicket(floor) {
+        const freeElev = getters.freeElevators;
+        if (freeElev.length > 0) {
+          const nearestElev = freeElev.sort(
+            (a, b) =>
+              Math.abs(a.currentFloor - floor) -
+              Math.abs(b.currentFloor - floor)
+          )[0];
+          return nearestElev;
         }
+
+        const elevatorWithSmollestLoad = getters.elevatorsLoad.sort(
+          (a, b) => a.countTickets - b.countTickets
+        )[0];
+        return elevatorWithSmollestLoad;
       }
     },
 
-    updateRndCatImg({ commit }) {
+    updateRndCatImg({ commit }, elevator) {
       service
         .fetchRndCatImg()
         .then((res) => res.json())
-        .then((json) => commit("updateRndCatImg", json[0].url));
+        .then((json) =>
+          commit("updateRndCatImg", { elevator, url: json[0].url })
+        );
     },
   },
   modules: {},

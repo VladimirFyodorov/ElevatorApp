@@ -1,12 +1,12 @@
 <template>
   <div @click="onClick" :style="elevatorCSS" class="elevator">
-    <div class="elevatorHeader">
+    <div :style="headerCSS" class="elevatorHeader">
       <div :class="headerArrowCSS"></div>
       {{ headerTxt }}
     </div>
     <div class="doors">
-      <div :style="doorsWidthCSS" class="door left"></div>
-      <div :style="doorsWidthCSS" class="door right"></div>
+      <div :style="doorsCSS" class="door left"></div>
+      <div :style="doorsCSS" class="door right"></div>
     </div>
   </div>
 </template>
@@ -15,36 +15,41 @@
 import { mapGetters, mapActions } from "vuex";
 export default {
   name: "TheElevator",
+  props: ["data"],
   computed: {
-    ...mapGetters([
-      "position",
-      "currentFloor",
-      "destinationFloor",
-      "doorsWidth",
-      "imgUrl",
-    ]),
+    ...mapGetters(["floorsAmount"]),
     elevatorCSS() {
-      const postition = `top: ${this.position * this.vh}px; `;
-      const img = `background-image: url("${this.imgUrl}"); `;
-      return postition + img;
+      const height = `height: ${100 / this.floorsAmount}vh; `;
+      const width = `width: ${70 / this.floorsAmount}vh; `;
+      const postition = `top: ${this.data.position * this.vh}px; `;
+      const img = `background-image: url("${this.data.imgUrl}"); `;
+      return width + height + postition + img;
+    },
+
+    headerCSS() {
+      const height = `height: ${(100 * 0.2) / this.floorsAmount}vh; `;
+      return height;
     },
 
     headerTxt() {
-      const dest = this.destinationFloor;
+      const dest = this.data.destinationFloor;
       return dest ? `${dest}` : "";
     },
 
     headerArrowCSS() {
-      const cur = this.currentFloor;
-      const dest = this.destinationFloor;
+      const cur = this.data.currentFloor;
+      const dest = this.data.destinationFloor;
       if (!dest) {
         return "";
       }
       return cur > dest ? "arrow-down" : "arrow-up";
     },
 
-    doorsWidthCSS() {
-      return `width: ${this.doorsWidth * this.maxDoorsWidth}px`;
+    doorsCSS() {
+      const height = `height: ${(100 * 0.8) / this.floorsAmount}vh; `;
+      const widthNum = (this.data.doorsWidth * 35) / this.floorsAmount;
+      const width = `width: ${widthNum}vh; `;
+      return height + width;
     },
   },
   methods: {
@@ -56,8 +61,7 @@ export default {
 
   data() {
     return {
-      vh: window.innerHeight * 0.99 - 2,
-      maxDoorsWidth: 59,
+      vh: window.innerHeight * 0.98 - 2,
     };
   },
 };
@@ -65,15 +69,13 @@ export default {
 
 <style scoped>
 div.elevator {
-  position: absolute;
-  left: 0px;
+  /* position: absolute; */
+  position: relative;
   width: 118px;
-  height: 20vh;
   background-size: cover;
 }
 
 div.elevatorHeader {
-  height: 2vh;
   border-bottom: 1px black solid;
   background-color: gray;
 
@@ -89,7 +91,6 @@ div.doors {
 
 div.door {
   width: 59px;
-  height: 18vh;
   background-color: gray;
 }
 

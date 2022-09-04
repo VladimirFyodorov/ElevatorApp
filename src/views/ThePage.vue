@@ -1,12 +1,12 @@
 <template>
   <div class="wrapper">
-    <ElevatorShaft />
+    <TheShafts />
     <ElevatorButtons />
   </div>
 </template>
 
 <script>
-import ElevatorShaft from "../components/ElevatorShaft.vue";
+import TheShafts from "../components/TheShafts.vue";
 import ElevatorButtons from "../components/ElevatorButtons.vue";
 import { makeBackup } from "../utils";
 import { mapActions } from "vuex";
@@ -14,15 +14,15 @@ import { mapActions } from "vuex";
 export default {
   name: "ThePage",
   components: {
-    ElevatorShaft,
+    TheShafts,
     ElevatorButtons,
   },
   methods: {
-    ...mapActions(["start"]),
+    ...mapActions(["startAll"]),
   },
   created() {
     document.addEventListener("DOMContentLoaded", () => {
-      this.start();
+      this.startAll();
     });
     window.addEventListener("beforeunload", () => {
       makeBackup(this.$store.state);

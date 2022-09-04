@@ -1,12 +1,13 @@
 <template>
   <div class="button">
-    <p>{{ floor }}</p>
+    <p class="button-number">{{ floor }}</p>
     <button @click="onClick" :style="btnColor" class="btn-circle"></button>
   </div>
 </template>
 
 <script>
 import { mapActions } from "vuex";
+
 export default {
   name: "ElevatorButton",
   props: ["floor"],
@@ -18,20 +19,13 @@ export default {
   },
   computed: {
     btnColor() {
-      const hasTicket =
-        this.$store.state.tickets.filter(
-          (ticket) =>
-            ticket.floor == this.floor && !ticket.done && !ticket.isWaiting
-        ).length > 0;
-      const hasCompletingTicket =
-        this.$store.state.tickets.filter(
-          (ticket) => ticket.floor == this.floor && ticket.isMoving
-        ).length > 0;
-      const color = hasCompletingTicket
-        ? "green"
-        : hasTicket
-        ? "#FFFF99"
-        : "#D3D3D3";
+      const colorRaw = this.$store.getters.btnColor(this.floor);
+      const color =
+        colorRaw == "green"
+          ? "green"
+          : colorRaw == "yellow"
+          ? "#FFFF99"
+          : "#D3D3D3";
       return `background-color: ${color};`;
     },
   },
@@ -39,6 +33,17 @@ export default {
 </script>
 
 <style scoped>
+div.button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+p.button-number {
+  margin-top: 0px;
+  margin-bottom: 3px;
+}
+
 .btn-circle {
   width: 20px;
   height: 20px;
