@@ -11,4 +11,4 @@ You can change amount of elevators and floors in **config.js**
 
 <hr>
 
-![Home page](/readme_src/preview.jpg "Home page")
+![Home page](/readme_src/preview.png "Home page")
