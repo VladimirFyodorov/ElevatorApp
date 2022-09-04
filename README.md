@@ -1,24 +1,9 @@
-# elevator-app
+# Elevator app
 
-## Project setup
+To initialize repository run
 ```
 npm install
+npm run start
 ```
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+You can change amount of elevators and floors in config.js
