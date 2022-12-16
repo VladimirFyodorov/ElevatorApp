@@ -1,6 +1,9 @@
 # Elevator app
 
-To initialize repository run
+## See in action
+https://elevatorapp-804a9.web.app/
+
+## Init
 ```
 npm install
 npm run start
