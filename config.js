@@ -1,6 +1,6 @@
 const config = {
-  elevatorsAmount: 4,
-  floorsAmount: 10,
+  elevatorsAmount: 3,
+  floorsAmount: 5,
 };
 
 export default config;
